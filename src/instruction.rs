@@ -157,6 +157,7 @@ mod tests {
     fn test_create_instruction() {
         let instruction = Instruction::new(Opcode::STOP);
         assert_eq!(instruction.opcode, Opcode::STOP);
+        assert_eq!(instruction.args, InstructionArgs::Uninitialized);
     }
     #[test]
     fn test_u8_conversion() {
