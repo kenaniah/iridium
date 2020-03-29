@@ -129,11 +129,6 @@ impl From<u8> for Opcode {
         }
     }
 }
-impl Into<u8> for Opcode {
-    fn into(self) -> u8 {
-        self as u8
-    }
-}
 
 #[derive(Debug, PartialEq)]
 pub struct Instruction {
