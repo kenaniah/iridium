@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 #[derive(Debug, PartialEq)]
 #[allow(non_camel_case_types)]
 pub enum Opcode {
@@ -101,17 +99,17 @@ pub enum Opcode {
 
 #[derive(Default)]
 pub struct OpcodeArity {
-    argc: u8,
-    arg1_size: u8,
-    arg1_signed: bool,
-    arg2_size: u8,
-    arg2_signed: bool,
-    arg3_size: u8,
-    arg3_signed: bool,
+    pub argc: u8,
+    pub arg1_size: u8,
+    pub arg1_signed: bool,
+    pub arg2_size: u8,
+    pub arg2_signed: bool,
+    pub arg3_size: u8,
+    pub arg3_signed: bool,
 }
 
 impl Opcode {
-    fn arity(&self) -> OpcodeArity {
+    pub fn arity(&self) -> OpcodeArity {
         match self {
             // No args
             Self::NOP
