@@ -97,7 +97,6 @@ pub enum Opcode {
     INVALID = 255,
 }
 
-
 pub type U24 = (u8, u8, u8);
 
 #[derive(Debug, PartialEq)]
