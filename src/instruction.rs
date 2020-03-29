@@ -326,4 +326,27 @@ mod tests {
             assert_eq!(Opcode::from(v), Opcode::from(Opcode::from(v) as u8));
         }
     }
+    #[test]
+    fn test_arity() {
+        // Basic tests
+        assert_eq!(0, Opcode::NOP.arity().argc);
+        assert_eq!(1, Opcode::LOADNIL.arity().argc);
+        assert_eq!(8, Opcode::LOADNIL.arity().arg1_size);
+        assert_eq!(2, Opcode::JMPIF.arity().argc);
+        assert_eq!(8, Opcode::JMPIF.arity().arg1_size);
+        assert_eq!(16, Opcode::JMPIF.arity().arg2_size);
+        // Ensures argc matches argument sizes
+        for v in 0..Opcode::MAX as u8 {
+            match Opcode::from(v).arity() {
+                OpcodeArity { argc: 0, arg1_size: 0, arg2_size: 0, arg3_size: 0, .. } => {}
+                OpcodeArity { argc: 1, arg1_size: 8, arg2_size: 0, arg3_size: 0, .. } => {}
+                OpcodeArity { argc: 1, arg1_size: 16, arg2_size: 0, arg3_size: 0, .. } => {}
+                OpcodeArity { argc: 1, arg1_size: 24, arg2_size: 0, arg3_size: 0, .. } => {}
+                OpcodeArity { argc: 2, arg1_size: 8, arg2_size: 8, arg3_size: 0, .. } => {}
+                OpcodeArity { argc: 2, arg1_size: 8, arg2_size: 16, arg3_size: 0, .. } => {}
+                OpcodeArity { argc: 3, arg1_size: 8, arg2_size: 8, arg3_size: 8, .. } => {}
+                _ => panic!("Opcode {:?} - arguments do not match allowed sizes", Opcode::from(v))
+            }
+        }
+    }
 }
