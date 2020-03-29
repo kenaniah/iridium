@@ -131,4 +131,17 @@ mod tests {
         let instruction = Instruction::new(Opcode::STOP);
         assert_eq!(instruction.opcode, Opcode::STOP);
     }
+    #[test]
+    fn test_u8_conversion() {
+        // Basic tests
+        assert_eq!(Opcode::NOP, Opcode::from(0));
+        assert_eq!(Opcode::STOP, Opcode::from(91));
+        assert_eq!(Opcode::INVALID, Opcode::from(92));
+        assert_eq!(Opcode::INVALID, Opcode::from(200));
+        // Roundtrip tests
+        for v in 0..Opcode::MAX as u8 {
+            assert_eq!(v, Opcode::from(v) as u8);
+            assert_eq!(Opcode::from(v), Opcode::from(Opcode::from(v) as u8));
+        }
+    }
 }
