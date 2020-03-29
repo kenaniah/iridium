@@ -102,7 +102,7 @@ pub type U24 = (u8, u8, u8);
 
 #[derive(Debug, PartialEq)]
 pub enum InstructionArgs {
-    Unknown,
+    Uninitialized,
     // Zero arguments
     None,
     // One argument
@@ -146,7 +146,7 @@ impl Instruction {
     pub fn new(opcode: Opcode) -> Instruction {
         Instruction {
             opcode: opcode,
-            args: InstructionArgs::Unknown,
+            args: InstructionArgs::Uninitialized,
         }
     }
 }
