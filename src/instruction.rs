@@ -338,14 +338,59 @@ mod tests {
         // Ensures argc matches argument sizes
         for v in 0..Opcode::MAX as u8 {
             match Opcode::from(v).arity() {
-                OpcodeArity { argc: 0, arg1_size: 0, arg2_size: 0, arg3_size: 0, .. } => {}
-                OpcodeArity { argc: 1, arg1_size: 8, arg2_size: 0, arg3_size: 0, .. } => {}
-                OpcodeArity { argc: 1, arg1_size: 16, arg2_size: 0, arg3_size: 0, .. } => {}
-                OpcodeArity { argc: 1, arg1_size: 24, arg2_size: 0, arg3_size: 0, .. } => {}
-                OpcodeArity { argc: 2, arg1_size: 8, arg2_size: 8, arg3_size: 0, .. } => {}
-                OpcodeArity { argc: 2, arg1_size: 8, arg2_size: 16, arg3_size: 0, .. } => {}
-                OpcodeArity { argc: 3, arg1_size: 8, arg2_size: 8, arg3_size: 8, .. } => {}
-                _ => panic!("Opcode {:?} - arguments do not match allowed sizes", Opcode::from(v))
+                OpcodeArity {
+                    argc: 0,
+                    arg1_size: 0,
+                    arg2_size: 0,
+                    arg3_size: 0,
+                    ..
+                } => {}
+                OpcodeArity {
+                    argc: 1,
+                    arg1_size: 8,
+                    arg2_size: 0,
+                    arg3_size: 0,
+                    ..
+                } => {}
+                OpcodeArity {
+                    argc: 1,
+                    arg1_size: 16,
+                    arg2_size: 0,
+                    arg3_size: 0,
+                    ..
+                } => {}
+                OpcodeArity {
+                    argc: 1,
+                    arg1_size: 24,
+                    arg2_size: 0,
+                    arg3_size: 0,
+                    ..
+                } => {}
+                OpcodeArity {
+                    argc: 2,
+                    arg1_size: 8,
+                    arg2_size: 8,
+                    arg3_size: 0,
+                    ..
+                } => {}
+                OpcodeArity {
+                    argc: 2,
+                    arg1_size: 8,
+                    arg2_size: 16,
+                    arg3_size: 0,
+                    ..
+                } => {}
+                OpcodeArity {
+                    argc: 3,
+                    arg1_size: 8,
+                    arg2_size: 8,
+                    arg3_size: 8,
+                    ..
+                } => {}
+                _ => panic!(
+                    "Opcode {:?} - arguments do not match allowed sizes",
+                    Opcode::from(v)
+                ),
             }
         }
     }
