@@ -97,6 +97,30 @@ pub enum Opcode {
     INVALID = 255,
 }
 
+
+pub type U24 = (u8, u8, u8);
+
+#[derive(Debug, PartialEq)]
+pub enum InstructionArgs {
+    Unknown,
+    // Zero arguments
+    None,
+    // One argument
+    U8(u8),
+    U16(u16),
+    I16(i16),
+    U24(U24),
+    // Two arguments
+    U8U8(u8, u8),
+    U8I8(u8, i8),
+    U16U8(u16, u8),
+    U8U16(u8, u16),
+    U8I16(u8, i16),
+    U16U16(u16, u16),
+    // Three arguments
+    U8U8U8(u8, u8, u8),
+}
+
 impl From<u8> for Opcode {
     fn from(v: u8) -> Self {
         if v < Opcode::MAX as u8 {
@@ -115,11 +139,15 @@ impl Into<u8> for Opcode {
 #[derive(Debug, PartialEq)]
 pub struct Instruction {
     opcode: Opcode,
+    args: InstructionArgs,
 }
 
 impl Instruction {
     pub fn new(opcode: Opcode) -> Instruction {
-        Instruction { opcode: opcode }
+        Instruction {
+            opcode: opcode,
+            args: InstructionArgs::Unknown,
+        }
     }
 }
 
