@@ -258,7 +258,7 @@ impl Opcode {
 pub type U24 = (u8, u8, u8);
 
 #[derive(Debug, PartialEq)]
-pub enum InstructionArgs {
+pub enum OpcodeArgs {
     Uninitialized,
     // Zero arguments
     None,
@@ -287,30 +287,9 @@ impl From<u8> for Opcode {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub struct Instruction {
-    opcode: Opcode,
-    args: InstructionArgs,
-}
-
-impl Instruction {
-    pub fn new(opcode: Opcode) -> Instruction {
-        Instruction {
-            opcode: opcode,
-            args: InstructionArgs::Uninitialized,
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[test]
-    fn test_create_instruction() {
-        let instruction = Instruction::new(Opcode::STOP);
-        assert_eq!(instruction.opcode, Opcode::STOP);
-        assert_eq!(instruction.args, InstructionArgs::Uninitialized);
-    }
     #[test]
     fn test_u8_conversion() {
         // Basic tests
