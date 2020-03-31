@@ -1,3 +1,6 @@
+/// Represents a 24-bit value, implemented as a tuple of 3 `u8` values
+pub type U24 = (u8, u8, u8);
+
 #[derive(Debug, PartialEq)]
 #[allow(non_camel_case_types)]
 /// Defines the operations that are allowed within a virtual machine
@@ -5,7 +8,8 @@
 /// # Opcode arguments
 /// Opcodes within the Ruby virtual machine can take 0 - 3 arguments. Arguments can be either
 /// 8-bit, 16-bit, or 24-bit. They can be both signed or unsigned (with the exception of 24-bit
-/// arguments, which are always unsigned).
+/// arguments, which are always unsigned). 24-bit arguments are implemented as a tuple of 3 8-bit
+/// arguments for memory efficiency -- see the [U24 type](type.U24.html) for more info.
 ///
 /// There are 3 modifier opcodes that can adjust the size of the arguments to the next opcode
 /// encountered. These modifier opcodes are:
@@ -119,6 +123,7 @@ pub enum Opcode {
 }
 
 #[derive(Default)]
+/// Represents the arity and nature of the arguments for an opcode
 pub struct OpcodeArity {
     pub argc: u8,
     pub arg1_size: u8,
@@ -130,6 +135,13 @@ pub struct OpcodeArity {
 }
 
 impl Opcode {
+    /// Returns the arity and nature of the arguments for an opcode
+    ///
+    /// Opcodes:
+    /// * May have 0 - 3 arguments of 8, 16, or 24-bit lengths
+    /// * May have signed or unsigned arguments
+    /// * May have 8-bit arguments resized to 16-bit arguments when preceded by
+    /// [`EXT1`](#variant.EXT1), [`EXT2`](#variant.EXT2), or [`EXT3`](#variant.EXT3)
     pub fn arity(&self) -> OpcodeArity {
         match self {
             // No args
@@ -276,9 +288,8 @@ impl Opcode {
     }
 }
 
-pub type U24 = (u8, u8, u8);
-
 #[derive(Debug, PartialEq)]
+/// Stores the values of an opcode's arguments for an instruction
 pub enum OpcodeArgs {
     // Zero arguments
     None,
