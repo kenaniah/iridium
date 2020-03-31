@@ -2,6 +2,7 @@ use crate::opcode::{Opcode, OpcodeArgs, OpcodeArity, U24};
 
 #[derive(Debug, PartialEq)]
 /// Respresents a single instruction to be executed within a Virtual Machine
+///
 /// Instructions consist of an opcode and up to 3 arguments.
 pub struct Instruction {
     opcode: Opcode,
