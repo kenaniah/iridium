@@ -1,5 +1,14 @@
 use crate::opcode::{Opcode, OpcodeArgs, OpcodeArity, U24};
 
+#[derive(Debug, PartialEq)]
+/// Respresents a single instruction to be executed within a Virtual Machine
+/// Instructions consist of an opcode and up to 3 arguments.
+pub struct Instruction {
+    opcode: Opcode,
+    args: OpcodeArgs,
+}
+
+/// Tracks the state of a Virtual Machine
 pub struct VM {
     registers: [i32; 32],
     pc: usize,
@@ -7,6 +16,7 @@ pub struct VM {
 }
 
 impl VM {
+    /// Creates a new Virtual Machine instance
     pub fn new() -> VM {
         VM {
             registers: [0; 32],
@@ -14,13 +24,22 @@ impl VM {
             program: vec![],
         }
     }
-    /// Checks whether the progam counter has reached the end of the program
+    /// Checks whether the progam counter has reached the end of the program (there are no more bytes to read)
     fn eof(&self) -> bool {
         self.eof_with_offset(0)
     }
-    /// Checks whether the progam counter has reached the end of the program
-    fn eof_with_offset(&self, offset: usize) -> bool {
-        self.pc + offset >= self.program.len()
+    /// Checks whether the progam counter would reach the end of the program given the requested offset
+    /// # Panics
+    /// Panics if the offset causes the program counter to underflow
+    fn eof_with_offset(&self, offset: isize) -> bool {
+        if offset < 0 {
+            self.pc - (offset.wrapping_abs() as usize) >= self.program.len()
+        } else {
+            self.pc + (offset as usize) >= self.program.len()
+        }
+    }
+    fn decode_error(&self, opcode: Opcode, arity: OpcodeArity) -> Result<Instruction, String> {
+        Err(format!("Could to decode arguments for opcode {:?} - {} argument(s) needed, but bytecode reached EOF.", opcode, arity.argc))
     }
     /// Decodes an instruction and advances the program counter accordingly
     fn decode_instruction(&mut self) -> Result<Instruction, String> {
@@ -37,9 +56,8 @@ impl VM {
 
         // Next, attempt to build an instruction
         if let Some(opcode) = opcode {
-            // Initialize
+            // Determine the arguments needed for this opcode
             let mut arity = opcode.arity();
-            let mut instruction = Instruction::new(opcode);
             // Adjust for any extended arguments
             match op_ext {
                 Some(Opcode::EXT1) => {
@@ -63,7 +81,7 @@ impl VM {
                 _ => {}
             }
             // Associate the instruction's arguments
-            instruction.args = match arity {
+            let args = match arity {
                 // No args
                 OpcodeArity { argc: 0, .. } => OpcodeArgs::None,
                 // Single arg
@@ -76,7 +94,7 @@ impl VM {
                     if let Some(arg1) = self.next_8_bits() {
                         OpcodeArgs::U8(arg1)
                     } else {
-                        OpcodeArgs::Uninitialized
+                        return self.decode_error(opcode, arity);
                     }
                 }
                 OpcodeArity {
@@ -88,7 +106,7 @@ impl VM {
                     if let Some(arg1) = self.next_16_bits() {
                         OpcodeArgs::U16(arg1)
                     } else {
-                        OpcodeArgs::Uninitialized
+                        return self.decode_error(opcode, arity);
                     }
                 }
                 OpcodeArity {
@@ -100,7 +118,7 @@ impl VM {
                     if let Some(arg1) = self.next_16_bits() {
                         OpcodeArgs::I16(arg1 as i16)
                     } else {
-                        OpcodeArgs::Uninitialized
+                        return self.decode_error(opcode, arity);
                     }
                 }
                 OpcodeArity {
@@ -112,7 +130,7 @@ impl VM {
                     if let Some(arg1) = self.next_24_bits() {
                         OpcodeArgs::U24(arg1)
                     } else {
-                        OpcodeArgs::Uninitialized
+                        return self.decode_error(opcode, arity);
                     }
                 }
                 // Two args
@@ -127,7 +145,7 @@ impl VM {
                     if let (Some(arg1), Some(arg2)) = (self.next_8_bits(), self.next_8_bits()) {
                         OpcodeArgs::U8U8(arg1, arg2)
                     } else {
-                        OpcodeArgs::Uninitialized
+                        return self.decode_error(opcode, arity);
                     }
                 }
                 OpcodeArity {
@@ -141,7 +159,7 @@ impl VM {
                     if let (Some(arg1), Some(arg2)) = (self.next_8_bits(), self.next_8_bits()) {
                         OpcodeArgs::U8I8(arg1, arg2 as i8)
                     } else {
-                        OpcodeArgs::Uninitialized
+                        return self.decode_error(opcode, arity);
                     }
                 }
                 OpcodeArity {
@@ -155,7 +173,7 @@ impl VM {
                     if let (Some(arg1), Some(arg2)) = (self.next_8_bits(), self.next_16_bits()) {
                         OpcodeArgs::U8U16(arg1, arg2)
                     } else {
-                        OpcodeArgs::Uninitialized
+                        return self.decode_error(opcode, arity);
                     }
                 }
                 OpcodeArity {
@@ -169,7 +187,7 @@ impl VM {
                     if let (Some(arg1), Some(arg2)) = (self.next_8_bits(), self.next_16_bits()) {
                         OpcodeArgs::U8I16(arg1, arg2 as i16)
                     } else {
-                        OpcodeArgs::Uninitialized
+                        return self.decode_error(opcode, arity);
                     }
                 }
                 OpcodeArity {
@@ -183,7 +201,7 @@ impl VM {
                     if let (Some(arg1), Some(arg2)) = (self.next_16_bits(), self.next_16_bits()) {
                         OpcodeArgs::U16U16(arg1, arg2)
                     } else {
-                        OpcodeArgs::Uninitialized
+                        return self.decode_error(opcode, arity);
                     }
                 }
                 // Three args
@@ -201,13 +219,19 @@ impl VM {
                     {
                         OpcodeArgs::U8U8U8(arg1, arg2, arg3)
                     } else {
-                        OpcodeArgs::Uninitialized
+                        return self.decode_error(opcode, arity);
                     }
                 }
                 // Invalid args
-                _ => OpcodeArgs::Uninitialized,
+                _ => return Err(format!(
+                    "Could not decode arguments for opcode {:?} - arity could not be determined.",
+                    opcode
+                )),
             };
-            Ok(instruction)
+            Ok(Instruction {
+                opcode: opcode,
+                args: args,
+            })
         } else {
             Err(
                 "Could not decode the next instruction. End of program has been reached."
@@ -288,21 +312,6 @@ impl VM {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub struct Instruction {
-    opcode: Opcode,
-    args: OpcodeArgs,
-}
-
-impl Instruction {
-    pub fn new(opcode: Opcode) -> Instruction {
-        Instruction {
-            opcode: opcode,
-            args: OpcodeArgs::Uninitialized,
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -318,7 +327,7 @@ mod tests {
         test_vm.run();
     }
     #[test]
-    fn test_opcode_hlt() {
+    fn test_opcode_stop() {
         let mut test_vm = VM::new();
         test_vm.program = vec![Opcode::STOP as u8, 0, 0, 0];
         test_vm.run();
@@ -332,16 +341,37 @@ mod tests {
         assert_eq!(test_vm.registers[0], 500);
     }
     #[test]
-    fn test_opcode_igl() {
+    fn test_opcode_invalid() {
         let mut test_vm = VM::new();
         test_vm.program = vec![200, 0, 0, 0];
         test_vm.run();
         assert_eq!(test_vm.pc, 1);
     }
     #[test]
-    fn test_create_instruction() {
-        let instruction = Instruction::new(Opcode::STOP);
-        assert_eq!(instruction.opcode, Opcode::STOP);
-        assert_eq!(instruction.args, OpcodeArgs::Uninitialized);
+    fn test_eof() {
+        let mut test_vm = VM::new();
+        test_vm.program = vec![];
+        assert_eq!(test_vm.eof(), true);
+        test_vm.program = vec![0];
+        assert_eq!(test_vm.eof(), false);
+        test_vm.program = vec![0, 0, 0, 0, 0, 0];
+        for v in 0..10 {
+            test_vm.pc = v;
+            assert_eq!(test_vm.eof(), v > 5);
+        }
+    }
+    #[test]
+    fn test_of_with_offset() {
+        let mut test_vm = VM::new();
+        test_vm.program = vec![0, 0, 0, 0, 0, 0];
+        test_vm.pc = 2;
+        assert_eq!(test_vm.eof_with_offset(0), false);
+        assert_eq!(test_vm.eof_with_offset(3), false);
+        assert_eq!(test_vm.eof_with_offset(4), true);
+        assert_eq!(test_vm.eof_with_offset(8), true);
+        test_vm.pc = 10;
+        assert_eq!(test_vm.eof_with_offset(0), true);
+        assert_eq!(test_vm.eof_with_offset(-5), false);
+        assert_eq!(test_vm.eof_with_offset(-10), false);
     }
 }

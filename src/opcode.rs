@@ -259,7 +259,6 @@ pub type U24 = (u8, u8, u8);
 
 #[derive(Debug, PartialEq)]
 pub enum OpcodeArgs {
-    Uninitialized,
     // Zero arguments
     None,
     // One argument
