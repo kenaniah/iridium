@@ -7,19 +7,19 @@
 /// 8-bit, 16-bit, or 24-bit. They can be both signed or unsigned (with the exception of 24-bit
 /// arguments, which are always unsigned).
 ///
-/// Ruby has 3 modifier opcodes that can adjust the size of the arguments to the next opcode
+/// There are 3 modifier opcodes that can adjust the size of the arguments to the next opcode
 /// encountered. These modifier opcodes are:
-/// * `EXT1` - modifies the next opcode's first argument to be 16-bit
-/// * `EXT2` - modifies the next opcode's second argument to be 16-bit
-/// * `EXT3` - modifies both of the next opcode's first _and_ second arguments to be 16-bit
+/// * [`EXT1`](#variant.EXT1) - modifies the next opcode's first argument to be 16-bit
+/// * [`EXT2`](#variant.EXT2) - modifies the next opcode's second argument to be 16-bit
+/// * [`EXT3`](#variant.EXT3) - modifies both of the next opcode's first _and_ second arguments to be 16-bit
 ///
 /// The number and nature of the arguments for an opcode can be determined by calling its
 /// [arity()](#method.arity) method.
 ///
 /// # Opcode casting
 /// For convenience, opcodes can be safely cast to and from `u8`, but the
-/// [INVALID](#variant.INVALID) opcode will be returned when casting a `u8` value that either
-/// does not have a corresponding valid opcode or resolves to the [MAX](#variant.MAX) opcode,
+/// [`INVALID`](#variant.INVALID) opcode will be returned when casting a `u8` value that either
+/// does not have a corresponding valid opcode or resolves to the [`MAX`](#variant.MAX) opcode,
 /// which is simply a marker to detect the end of valid opcodes within the enum.
 pub enum Opcode {
     NOP,
