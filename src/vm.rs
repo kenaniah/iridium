@@ -224,10 +224,12 @@ impl VM {
                     }
                 }
                 // Invalid args
-                _ => return Err(format!(
+                _ => {
+                    return Err(format!(
                     "Could not decode arguments for opcode {:?} - arity could not be determined.",
                     opcode
-                )),
+                ))
+                }
             };
             Ok(Instruction {
                 opcode: opcode,
@@ -319,7 +321,7 @@ mod tests {
     #[test]
     fn test_create_vm() {
         let test_vm = VM::new();
-        assert_eq!(test_vm.registers[0], 0)
+        assert_eq!(test_vm.registers[0], 0);
     }
     #[test]
     fn test_empty_program() {
