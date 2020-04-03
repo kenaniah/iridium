@@ -26,6 +26,7 @@ pub type U24 = (u8, u8, u8);
 /// does not have a corresponding valid opcode or resolves to the [`MAX`](#variant.MAX) opcode,
 /// which is simply a marker to detect the end of valid opcodes within the enum.
 pub enum Opcode {
+    /// No operation
     NOP,
     MOVE,
     LOADL,

@@ -9,6 +9,7 @@ pub struct Instruction {
     args: OpcodeArgs,
 }
 
+#[derive(Debug, PartialEq)]
 /// Tracks the state of a Virtual Machine
 pub struct VM {
     registers: [i32; 32],
@@ -294,6 +295,7 @@ impl VM {
     pub fn execute_instruction(&mut self) -> bool {
         if let Ok(instruction) = self.decode_instruction() {
             match instruction.opcode {
+                Opcode::NOP => {}
                 Opcode::STOP => {
                     println!("Halt encountered.");
                     return false;
@@ -385,5 +387,17 @@ mod tests {
         assert_eq!(test_vm.eof_with_offset(0), true);
         assert_eq!(test_vm.eof_with_offset(-5), false);
         assert_eq!(test_vm.eof_with_offset(-10), false);
+    }
+    #[test]
+    fn test_op_nop() {
+        let mut test_vm = VM::new();
+        test_vm.program = vec![Opcode::NOP as u8, Opcode::NOP as u8, Opcode::NOP as u8];
+        test_vm.run();
+        assert_eq!(test_vm.pc, 3);
+        // Ensure the VM's state is the same as a newly initialized VM
+        let mut comp_vm = VM::new();
+        comp_vm.program = test_vm.program.clone();
+        comp_vm.pc = test_vm.pc;
+        assert_eq!(test_vm, comp_vm);
     }
 }
