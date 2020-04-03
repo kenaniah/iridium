@@ -28,17 +28,29 @@ pub type U24 = (u8, u8, u8);
 pub enum Opcode {
     /// No operation
     NOP,
+    /// R(a) = R(b)
     MOVE,
+    /// R(a) = Pool(b)
     LOADL,
+    /// R(a) = mrb_int(b)
     LOADI,
+    /// R(a) = mrb_int(0)
     LOADI_0,
+    /// R(a) = mrb_int(1)
     LOADI_1,
+    /// R(a) = mrb_int(2)
     LOADI_2,
+    /// R(a) = mrb_int(3)
     LOADI_3,
+    /// R(a) = mrb_symbol(b)
     LOADSYM,
+    /// R(a) = nil
     LOADNIL,
+    /// R(a) = self
     LOADSELF,
+    /// R(a) = true
     LOADT,
+    /// R(a) = false
     LOADF,
     GETGV,
     SETGV,

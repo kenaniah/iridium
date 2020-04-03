@@ -15,6 +15,8 @@ pub struct VM {
     registers: [i32; 32],
     pc: usize,
     program: Vec<u8>,
+    halted: bool,
+    last_error: Option<String>,
 }
 
 impl VM {
@@ -24,6 +26,8 @@ impl VM {
             registers: [0; 32],
             pc: 0,
             program: vec![],
+            halted: false,
+            last_error: None,
         }
     }
     /// Checks whether the progam counter has reached the end of the program (there are no more bytes to read)
@@ -284,42 +288,49 @@ impl VM {
         Some(result)
     }
     /// Executes a single instruction and advances the program counter
-    pub fn run_once(&mut self) {
-        self.execute_instruction();
+    /// Returns true if successful
+    pub fn run_once(&mut self) -> bool {
+        self.execute_instruction()
     }
-    /// Executes instructions until the program is halted or EOF is encountered
+    /// Executes instructions until the program is halted or an error is encountered
     pub fn run(&mut self) {
-        while self.execute_instruction() {}
+        while self.last_error == None && !self.halted && !self.eof() && self.execute_instruction() {
+        }
     }
-    /// Executes a single instruction, returning whether the program is halted
+    /// Executes a single instruction
     pub fn execute_instruction(&mut self) -> bool {
-        if let Ok(instruction) = self.decode_instruction() {
-            match instruction.opcode {
-                Opcode::NOP => {}
-                Opcode::STOP => {
-                    println!("Halt encountered.");
-                    return false;
-                }
-                op @ Opcode::LOADI => match instruction.args {
-                    OpcodeArgs::U8I16(a, b) => {
-                        println!("{}, {}", a, b);
-                        self.registers[a as usize] = b as i32;
-                    }
-                    _ => {
-                        println!(
-                            "Unrecognized arguments {:?} for opcode {:?} found. Terminating.",
-                            instruction.args, op
-                        );
-                        return false;
-                    }
-                },
-                op @ _ => {
-                    println!("Unrecognized opcode {:?} found. Terminating.", op);
-                    return false;
-                }
-            }
-        } else {
+        let instruction = self.decode_instruction();
+        if let Err(reason) = instruction {
+            self.last_error = Some(reason);
             return false;
+        }
+        let instruction = instruction.unwrap();
+        match &instruction.opcode {
+            Opcode::NOP => {}
+            Opcode::MOVE => {}
+            Opcode::STOP => {
+                println!("Halt encountered.");
+                self.halted = true;
+                return false;
+            }
+            Opcode::LOADI => match instruction.args {
+                OpcodeArgs::U8I16(a, b) => {
+                    println!("{}, {}", a, b);
+                    self.registers[a as usize] = b as i32;
+                }
+                _ => {
+                    panic!(
+                        "Unrecognized arguments {:?} for opcode {:?} found. Terminating.",
+                        instruction.args, instruction.opcode
+                    );
+                }
+            },
+            _ => {
+                panic!(
+                    "Unrecognized opcode {:?} found. Terminating.",
+                    instruction.opcode
+                );
+            }
         }
         true
     }
@@ -338,12 +349,17 @@ mod tests {
         let mut test_vm = VM::new();
         test_vm.program = vec![];
         test_vm.run();
+        assert_eq!(test_vm.last_error, None);
     }
     #[test]
     fn test_opcode_stop() {
         let mut test_vm = VM::new();
         test_vm.program = vec![Opcode::STOP as u8, 0, 0, 0];
         test_vm.run();
+        assert_eq!(test_vm.pc, 1);
+        assert_eq!(test_vm.halted, true);
+        test_vm.run();
+        // Ensure that program can not advance further if halted
         assert_eq!(test_vm.pc, 1);
     }
     #[test]
@@ -353,13 +369,14 @@ mod tests {
         test_vm.run();
         assert_eq!(test_vm.registers[0], 500);
         assert_eq!(test_vm.eof(), true);
+        assert_eq!(test_vm.last_error, None);
     }
     #[test]
+    #[should_panic(expected = "Unrecognized opcode INVALID found. Terminating.")]
     fn test_opcode_invalid() {
         let mut test_vm = VM::new();
         test_vm.program = vec![200, 0, 0, 0];
         test_vm.run();
-        assert_eq!(test_vm.pc, 1);
     }
     #[test]
     fn test_eof() {
@@ -375,7 +392,7 @@ mod tests {
         }
     }
     #[test]
-    fn test_of_with_offset() {
+    fn test_eof_with_offset() {
         let mut test_vm = VM::new();
         test_vm.program = vec![0, 0, 0, 0, 0, 0];
         test_vm.pc = 2;
@@ -394,7 +411,7 @@ mod tests {
         test_vm.program = vec![Opcode::NOP as u8, Opcode::NOP as u8, Opcode::NOP as u8];
         test_vm.run();
         assert_eq!(test_vm.pc, 3);
-        // Ensure the VM's state is the same as a newly initialized VM
+        // Ensure the VM's state is the same as a newly-initialized VM
         let mut comp_vm = VM::new();
         comp_vm.program = test_vm.program.clone();
         comp_vm.pc = test_vm.pc;
