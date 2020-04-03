@@ -39,6 +39,7 @@ impl VM {
             self.pc + (offset as usize) >= self.program.len()
         }
     }
+    /// Generates the error message to be used when decoding an instruction fails due to EOF
     fn decode_error(&self, opcode: Opcode, arity: OpcodeArity) -> Result<Instruction, String> {
         Err(format!("Could to decode arguments for opcode {:?} - {} argument(s) needed, but bytecode reached EOF.", opcode, arity.argc))
     }
@@ -242,6 +243,7 @@ impl VM {
             )
         }
     }
+    /// Converts the next 8 bits into an opcode and advances the program counter
     fn decode_opcode(&mut self) -> Option<Opcode> {
         if let Some(opcode) = self.next_8_bits() {
             Some(Opcode::from(opcode))
@@ -249,6 +251,7 @@ impl VM {
             None
         }
     }
+    /// Reads the next 8 bits of the program and advances the program counter
     fn next_8_bits(&mut self) -> Option<u8> {
         if self.eof() {
             return None;
@@ -257,6 +260,7 @@ impl VM {
         self.pc += 1;
         Some(result)
     }
+    /// Reads the next 16 bits of the program and advances the program counter
     fn next_16_bits(&mut self) -> Option<u16> {
         if self.eof_with_offset(1) {
             return None;
@@ -265,6 +269,7 @@ impl VM {
         self.pc += 2;
         Some(result)
     }
+    /// Reads the next 24 bits of the program and advances the program counter
     fn next_24_bits(&mut self) -> Option<U24> {
         if self.eof_with_offset(2) {
             return None;
@@ -277,12 +282,15 @@ impl VM {
         self.pc += 3;
         Some(result)
     }
+    /// Executes a single instruction and advances the program counter
     pub fn run_once(&mut self) {
         self.execute_instruction();
     }
+    /// Executes instructions until the program is halted or EOF is encountered
     pub fn run(&mut self) {
         while self.execute_instruction() {}
     }
+    /// Executes a single instruction, returning whether the program is halted
     pub fn execute_instruction(&mut self) -> bool {
         if let Ok(instruction) = self.decode_instruction() {
             match instruction.opcode {
@@ -342,6 +350,7 @@ mod tests {
         test_vm.program = vec![Opcode::EXT2 as u8, Opcode::LOADI as u8, 0, 1, 244];
         test_vm.run();
         assert_eq!(test_vm.registers[0], 500);
+        assert_eq!(test_vm.eof(), true);
     }
     #[test]
     fn test_opcode_invalid() {
