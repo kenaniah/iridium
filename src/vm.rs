@@ -307,9 +307,18 @@ impl VM {
         let instruction = instruction.unwrap();
         match &instruction.opcode {
             Opcode::NOP => {}
-            Opcode::MOVE => {}
+            Opcode::MOVE => match instruction.args {
+                OpcodeArgs::U8U8(a, b) => {
+                    self.registers[a as usize] = self.registers[b as usize];
+                }
+                _ => {
+                    panic!(
+                        "Unrecognized arguments {:?} for opcode {:?} found. Terminating.",
+                        instruction.args, instruction.opcode
+                    );
+                }
+            },
             Opcode::STOP => {
-                println!("Halt encountered.");
                 self.halted = true;
                 return false;
             }
@@ -416,5 +425,18 @@ mod tests {
         comp_vm.program = test_vm.program.clone();
         comp_vm.pc = test_vm.pc;
         assert_eq!(test_vm, comp_vm);
+    }
+    #[test]
+    fn test_op_mov() {
+        let mut test_vm = VM::new();
+        test_vm.program = vec![Opcode::MOVE as u8, 2, 4, Opcode::MOVE as u8, 7, 1];
+        for v in 0..10 {
+            test_vm.registers[v] = v as i32 * 2;
+        }
+        test_vm.run();
+        assert_eq!(
+            &test_vm.registers[0..10],
+            &[0, 2, 8, 6, 8, 10, 12, 2, 16, 18]
+        );
     }
 }
